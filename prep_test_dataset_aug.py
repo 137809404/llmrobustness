@@ -16,9 +16,7 @@ import argparse
 import commentjson
 # from basic_pipeline import load_graph_args,eval_result
 # from model import get_model
-from dataloaders import add_prompt_transform_dict,\
-    graph_text_collator_dict, \
-    MoleculeDatasetSplitLabel,graph_text_tokenizer_dict
+from dataloaders import  MoleculeDatasetSplitLabel
 
 from transformers import (
     AutoTokenizer,
@@ -41,7 +39,7 @@ parser.add_argument('--task_policy',type=str,default='traversal', choices=['sing
 parser.add_argument('--split', type=str, default='scaffold')
 
 # set instruction type!!!
-parser.add_argument('--prompt_augmentation',default='',choices=['','rewrite','expand','detail','shorten','name'])
+parser.add_argument('--prompt_augmentation',default='',choices=['','rewrite','expand','detail','shorten','origin'])
 
 parser.add_argument('--runseed', type=int, default=0)
 parser.add_argument('--device', type=int, default=0)
@@ -160,7 +158,7 @@ if __name__ == '__main__':
         labels = int(num_tasks)
             
         # test dataset
-        for label_id in args.prompt_id.keys():
+        for label_id in prompt.keys():
             prompt_list =[]
             smiles_list =[]
             label_list = []
@@ -192,7 +190,7 @@ if __name__ == '__main__':
         
 
             # to parquet
-            new_path = os.path.join('./test_process/', data)
+            new_path = os.path.join('./test_process/', data, label_id)
             os.makedirs(new_path, exist_ok=True)
             df.to_parquet(os.path.join(new_path, 'test_{}_{}.parquet'.format(data, label_id)), index=False)
             

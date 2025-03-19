@@ -16,13 +16,14 @@ def create_prompt(results_smiles, results_label):
     for i in range(len(results_smiles)):
         
         # classifaction tasks
-        if results_label[i] == str(1.0):
+        if results_label[i] == str(1.0) or results_label[i] == "Yes":
             prompt += f"SMILES: {results_smiles[i]}\nlabel: Yes\n"
-        elif results_label[i] == str(0.0):
+        elif results_label[i] == str(0.0) or results_label[i] == "No":
             prompt += f"SMILES: {results_smiles[i]}\nlabel: No\n"
         else:
-            print(f'label is not 1.0 or 0.0')
-            
+            print(results_label[i])
+            # print(f'label is not 1.0 or 0.0')
+            pass
             
         # regression tasks
         # prompt += f"SMILES: {results_smiles[i]}\nlabel: {results_label[i]}\n"
@@ -57,7 +58,9 @@ for dataset in datasets:
             data_path = os.path.join(path, num)
 
             # data = FingerprintedDataset.open(dir, shape=shape_maccs)
+            print(shape_maccs.index_name)
             data = FingerprintedDataset.open(data_path, shape=shape_maccs)
+            print(data)
 
             table = pq.read_table(table_path)
             print(f'table: {len(table)}')
@@ -82,8 +85,13 @@ for dataset in datasets:
             i=0
 
             for macc in maccs:
+
                 macc = list(macc.as_py())
-                results =data.search(macc, 8)
+                # print(macc)
+                results =data.search(macc, 9)
+                # remove the first one
+                results = results[1:]
+                
 
                 index = [r[0] for r in results]
 
@@ -115,6 +123,7 @@ for dataset in datasets:
                     
                 else:
 
+
                     # for test dataset
                     data_1shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles[:1], results_label[:1]) + last_sentence, str(smiles[i]), str(label[i])])
                     data_2shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles[:2], results_label[:2]) + last_sentence, str(smiles[i]), str(label[i])])
@@ -125,7 +134,6 @@ for dataset in datasets:
                     # data_7shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles[:7], results_label[:7]) + last_sentence, str(smiles[i]), str(label[i])])
                     data_8shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles, results_label) + last_sentence, str(smiles[i]), str(label[i])])  #float
 
-                
                 i = i+1
             
             new_columns_1shot = pd.DataFrame(data_1shot, columns=['instruction', 'input', 'output'])
@@ -141,33 +149,35 @@ for dataset in datasets:
             new_path = './test_dataset/1-shot'
             os.makedirs(os.path.join(new_path, dataset), exist_ok=True)
             new_columns_1shot.to_json(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'), orient='records', lines=True)
-            print(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'))
+            # print(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'))
             
             new_path = './test_dataset/2-shot'
             os.makedirs(os.path.join(new_path, dataset), exist_ok=True)
             new_columns_2shot.to_json(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'), orient='records', lines=True)
-            print(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'))
+            # print(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'))
                         
             new_path = './test_dataset/3-shot'
             os.makedirs(os.path.join(new_path, dataset), exist_ok=True)
             new_columns_3shot.to_json(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'), orient='records', lines=True)
-            print(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'))
+            # print(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'))
                         
             new_path = './test_dataset/4-shot'
             os.makedirs(os.path.join(new_path, dataset), exist_ok=True)            
             new_columns_4shot.to_json(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'), orient='records', lines=True)
-            print(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'))
+            # print(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'))
                         
 
             new_path = './test_dataset/6-shot/'
             os.makedirs(os.path.join(new_path, dataset), exist_ok=True)
             new_columns_6shot.to_json(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'), orient='records', lines=True)
-            print(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'))
+            # print(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'))
                         
 
             new_path = './test_dataset/8-shot/'
             os.makedirs(os.path.join(new_path, dataset), exist_ok=True)            
             new_columns_8shot.to_json(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'), orient='records', lines=True)
+            # print(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'))
+
             print(os.path.join(new_path, dataset, file.split('_')[1] + '_' + num + '.json'))
 
 print('saved !')

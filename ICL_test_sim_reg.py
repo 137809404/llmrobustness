@@ -83,7 +83,9 @@ for dataset in datasets:
             #     # print(len(macc))
                 # print(datetime.datetime.now())
                 macc = list(macc.as_py())
-                results =data.search(macc, 8)
+                results =data.search(macc, 9)
+                # remove the first one
+                results = results[1:]
 
                 index = [r[0] for r in results]
 
@@ -97,33 +99,34 @@ for dataset in datasets:
                 front_sentences = ". ".join(sentences[:-1])
                 last_sentence = sentences[-1]
                 
-
+                # Extract the actual float value from PyArrow scalar
+                current_label = label[i].as_py()
                 
-                # for property dataset, its instruction will have one sentence
                 if len(front_sentences)==0:
 
                     # for test dataset
-                    data_1shot.append([f'Here are some examples about molecular property.\n' + create_prompt(results_smiles[:1], results_label[:1]) + last_sentence, str(smiles[i]), float(label[i])])
-                    data_2shot.append([f'Here are some examples about molecular property.\n' + create_prompt(results_smiles[:2], results_label[:2]) + last_sentence, str(smiles[i]), float(label[i])])
-                    data_3shot.append([f'Here are some examples about molecular property.\n' + create_prompt(results_smiles[:3], results_label[:3]) + last_sentence, str(smiles[i]), float(label[i])])
-                    data_4shot.append([f'Here are some examples about molecular property.\n' + create_prompt(results_smiles[:4], results_label[:4]) + last_sentence, str(smiles[i]), float(label[i])])
+                    data_1shot.append([f'Here are some examples about molecular property.\n' + create_prompt(results_smiles[:1], results_label[:1]) + last_sentence, str(smiles[i]), current_label])
+                    data_2shot.append([f'Here are some examples about molecular property.\n' + create_prompt(results_smiles[:2], results_label[:2]) + last_sentence, str(smiles[i]), current_label])
+                    data_3shot.append([f'Here are some examples about molecular property.\n' + create_prompt(results_smiles[:3], results_label[:3]) + last_sentence, str(smiles[i]), current_label])
+                    data_4shot.append([f'Here are some examples about molecular property.\n' + create_prompt(results_smiles[:4], results_label[:4]) + last_sentence, str(smiles[i]), current_label])
                     # data_5shot.append([f'Here are some examples about molecular property.\n' + create_prompt(results_smiles[:5], results_label[:5]) + last_sentence, smiles[i], label[i]])
-                    data_6shot.append([f'Here are some examples about molecular property.\n' + create_prompt(results_smiles[:6], results_label[:6]) + last_sentence, str(smiles[i]), float(label[i])])
+                    data_6shot.append([f'Here are some examples about molecular property.\n' + create_prompt(results_smiles[:6], results_label[:6]) + last_sentence, str(smiles[i]), current_label])
                     # data_7shot.append([f'Here are some examples about molecular property.\n' + create_prompt(results_smiles[:7], results_label[:7]) + last_sentence, smiles[i], label[i]])
-                    data_8shot.append([f'Here are some examples about molecular property.\n' + create_prompt(results_smiles, results_label) + last_sentence, str(smiles[i]), float(label[i])])
+                    data_8shot.append([f'Here are some examples about molecular property.\n' + create_prompt(results_smiles, results_label) + last_sentence, str(smiles[i]), current_label])
                     
                     
                 else:
+                    print(current_label) 
 
                     # for test dataset
-                    data_1shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles[:1], results_label[:1]) + last_sentence, str(smiles[i]), float(label[i])])
-                    data_2shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles[:2], results_label[:2]) + last_sentence, str(smiles[i]), float(label[i])])
-                    data_3shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles[:3], results_label[:3]) + last_sentence, str(smiles[i]), float(label[i])])
-                    data_4shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles[:4], results_label[:4]) + last_sentence, str(smiles[i]), float(label[i])])
+                    data_1shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles[:1], results_label[:1]) + last_sentence, str(smiles[i]), current_label])
+                    data_2shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles[:2], results_label[:2]) + last_sentence, str(smiles[i]), current_label])
+                    data_3shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles[:3], results_label[:3]) + last_sentence, str(smiles[i]), current_label])
+                    data_4shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles[:4], results_label[:4]) + last_sentence, str(smiles[i]), current_label])
                     # data_5shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles[:5], results_label[:5]) + last_sentence, str(smiles[i]), float(label[i])])
-                    data_6shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles[:6], results_label[:6]) + last_sentence, str(smiles[i]), float(label[i])])
+                    data_6shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles[:6], results_label[:6]) + last_sentence, str(smiles[i]), current_label])
                     # data_7shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles[:7], results_label[:7]) + last_sentence, str(smiles[i]), float(label[i])])
-                    data_8shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles, results_label) + last_sentence, str(smiles[i]), float(label[i])])  #float
+                    data_8shot.append([front_sentences +'. Here are some examples.\n' + create_prompt(results_smiles, results_label) + last_sentence, str(smiles[i]), current_label])  #float
 
                 
                 i = i+1

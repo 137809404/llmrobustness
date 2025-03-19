@@ -85,13 +85,22 @@ def augment_parquets_shard(
     shard_index: int,
     shards_count: int,
 ):
+    # 设置子进程的日志记录
+    logger = logging.getLogger(f"shard_{shard_index}")
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+
     filenames: List[str] = sorted(os.listdir(parquet_dir))
     files_count = len(filenames)
-    print(parquet_dir, augmentation, shard_index, shards_count)
+    logger.info(f"Starting shard {shard_index} of {shards_count} in {parquet_dir}")
     try:
         for file_idx in range(shard_index, files_count, shards_count):
             try:
                 filename = filenames[file_idx]
+                logger.info(f"Processing file {filename}")
                 augmentation(os.path.join(parquet_dir, filename))
                 logger.info(
                     "Augmented shard {}. Process # {} / {}".format(
@@ -100,6 +109,9 @@ def augment_parquets_shard(
                 )
             except KeyboardInterrupt as e:
                 raise e
+            except Exception as e:
+                logger.error(f"Error processing {filename}: {str(e)}")
+                continue
 
     except KeyboardInterrupt as e:
         logger.info(f"Stopping shard {shard_index} / {shards_count}")
@@ -191,76 +203,25 @@ def shards_index(dataset: FingerprintedDataset):
         dataset.shards[shard_idx].index_cached = None
 
 
-def mono_index_maccs(dataset: FingerprintedDataset):
-    index_path_maccs = os.path.join("indexes", dataset.dir, "usearch-maccs.usearch")
-    print(index_path_maccs)
-    os.makedirs(os.path.join("indexes", dataset.dir), exist_ok=True)
-
-    index_maccs = Index(
-        ndim=shape_maccs.nbits,
-        dtype=ScalarKind.B1,
-        metric=CompiledMetric(
-            pointer=tanimoto_maccs.address,
-            kind=MetricKind.Tanimoto,
-            signature=MetricSignature.ArrayArray,
-        ),
-        # path=index_path_maccs,
-    )
-
-    try:
-        for shard_idx, shard in enumerate(dataset.shards):
-            if shard.first_key in index_maccs:
-                logger.info(f"Skipping {shard_idx + 1} / {len(dataset.shards)}")
-                continue
-
-            logger.info(f"Starting {shard_idx + 1} / {len(dataset.shards)}")
-            table = shard.load_table(["maccs"])
-            n = len(table)
-
-            # No need to shuffle the entries as they already are:
-            keys = np.arange(shard.first_key, shard.first_key + n)
-            maccs_fingerprints = [table["maccs"][i].as_buffer() for i in range(n)]
-
-            # First construct the index just for MACCS representations
-            vectors = np.vstack(
-                [
-                    FingerprintedEntry.from_parts(
-                        None,
-                        maccs_fingerprints[i],
-                        None,
-                        None,
-                        shape_maccs,
-                    ).fingerprint
-                    for i in range(n)
-                ]
-            )
-
-            index_maccs.add(keys, vectors, log=f"Building {index_path_maccs}")
-
-            # Optional self-recall evaluation:
-            # stats: SearchStats = self_recall(index_maccs, sample=1000)
-            # logger.info(f"Self-recall: {100*stats.mean_recall:.2f} %")
-            # logger.info(f"Efficiency: {100*stats.mean_efficiency:.2f} %")
-            if shard_idx % 100 == 0:
-                index_maccs.save(index_path_maccs)
-
-            # Discard the objects to save some memory
-            dataset.shards[shard_idx].table_cached = None
-            dataset.shards[shard_idx].index_cached = None
-
-        index_maccs.save(index_path_maccs)
-        index_maccs.reset()
-    except KeyboardInterrupt:
-        pass
-
 
 
 if __name__ == "__main__":
+    # 设置主日志配置
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler()
+        ]
+    )
+    logger = logging.getLogger(__name__)
+    
     logger.info("Time to encode some molecules!")
 
     processes = max(cpu_count() - 4, 1)
     
     # classfication and regression datasets:
+    
     datasets = [
         'bace',
         'bbbp',
@@ -274,6 +235,7 @@ if __name__ == "__main__":
         'freesolv',
         'lipo'
         ]
+    datasets = ['bace', 'bbbp' , 'hiv', 'toxcast', 'tox21',  'cyp450', 'muv', 'esol', 'freesolv', 'lipo']
 
     
     for dataset in datasets:
@@ -283,12 +245,12 @@ if __name__ == "__main__":
         file_names = [f.name for f in Path(path).iterdir() if f.is_dir()]
         for file_name in file_names:
             dir  = os.path.join(path, file_name)
-            # print(dir)
+            print(dir)
             augment_parquet_shards(dir, augment_with_rdkit, processes)
             
-        # encode test
+        # # encode test
         
-        path = os.path.join('./test_process/', dataset)
+        # path = os.path.join('./test_process/', dataset)
     
-        # print(path)
-        augment_parquet_shards(path, augment_with_rdkit, processes)
+        # # print(path)
+        # augment_parquet_shards(path, augment_with_rdkit, processes)

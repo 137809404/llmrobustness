@@ -245,7 +245,8 @@ class MoleculeDatasetRich(MyMoleculeNet):
             y = torch.tensor(ys, dtype=torch.float).view(1, -1)
 
             data = Data(x=torch.tensor(graph['node_feat']), edge_index=torch.tensor(graph['edge_index']), edge_attr=torch.tensor(graph['edge_feat']), y=y,
-                        smiles=smiles)
+                        smiles=smiles)            
+
             data_smiles_list.append(smiles)
 
             if self.pre_filter is not None and not self.pre_filter(data):

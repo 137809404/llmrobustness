@@ -121,8 +121,10 @@ def augment_parquet_shards(
 
 
 def mono_index_maccs(dataset: FingerprintedDataset):
-
     os.makedirs(os.path.join(dataset.dir), exist_ok=True)
+    
+    # Move index_path_maccs definition here, outside the loop
+    index_path_maccs = os.path.join(dataset.dir, "index-maccs.usearch")
 
     index_maccs = Index(
         ndim=shape_maccs.nbits,
@@ -137,9 +139,9 @@ def mono_index_maccs(dataset: FingerprintedDataset):
 
     try:
         for shard_idx, shard in enumerate(dataset.shards):
-            if shard.name.split('_')[0] == 'test':
-                continue
-            index_path_maccs = os.path.join(dataset.dir, "index-maccs.usearch")
+            print(shard.name)
+            # if shard.name.split('_')[0] == 'test':
+            #     continue
 
             if shard.first_key in index_maccs:
                 logger.info(f"Skipping {shard_idx + 1} / {len(dataset.shards)}")
@@ -207,6 +209,7 @@ if __name__ == "__main__":
         'freesolv',
         'lipo'
         ]
+    datasets = ['bace', 'bbbp' , 'hiv', 'toxcast', 'tox21',  'cyp450', 'muv', 'esol', 'freesolv', 'lipo']
 
     
     for dataset in datasets:

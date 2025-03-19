@@ -208,11 +208,12 @@ class FingerprintedDataset:
 
         index = None
         if shape:
+            print(shape.index_name)
             index_path = os.path.join(dir, shape.index_name)
             # print(f'index_path: {index_path}')
             if os.path.exists(index_path):
                 index = Index.restore(index_path)
-                # print(f"Loaded index with {len(index)} entries")
+                print(f"Loaded index with {len(index)} entries")
 
         return FingerprintedDataset(dir=dir, shards=shards, shape=shape, index=index)
 
@@ -286,6 +287,7 @@ class FingerprintedDataset:
             # fingers[2],
             self.shape,
         )
+        # print(entry.fingerprint)
         # print(len(self.index))
         results: Matches = self.index.search(entry.fingerprint, count, log=log)
         # print(results)
