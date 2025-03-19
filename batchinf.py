@@ -29,6 +29,7 @@ def process_dataset(input_path, output_path):
     for root, _, files in os.walk(input_path):
         for file in files:
             if file.endswith('.json'):
+                print(f"Processing file: {file}")  # 添加调试信息
                 input_file = os.path.join(root, file)
                 
                 # 构建对应的输出路径
@@ -40,19 +41,26 @@ def process_dataset(input_path, output_path):
                 # 读取JSON文件并构建prompts
                 prompts, original_data = load_dataset(input_file)
                 
-                # 批量推理
-                outputs = llm.generate(prompts, sampling_params)
-                
-                # 保存结果
+                # 分批处理，每批5个
+                batch_size = 5
                 results = []
-                for i, output in enumerate(outputs):
-                    result = {
-                        "instruction": original_data[i]["instruction"],
-                        "input": original_data[i]["input"],
-                        "expected_output": original_data[i]["output"],
-                        "model_output": output.outputs[0].text.strip()
-                    }
-                    results.append(result)
+                for i in range(0, len(prompts), batch_size):
+                    batch_prompts = prompts[i:i + batch_size]
+                    batch_data = original_data[i:i + batch_size]
+                    print(f"Processing batch {i//batch_size + 1}: {len(batch_prompts)} prompts")  # 添加调试信息
+                    
+                    # 批量推理
+                    outputs = llm.generate(batch_prompts, sampling_params)
+                    
+                    # 保存结果
+                    for j, output in enumerate(outputs):
+                        result = {
+                            "instruction": batch_data[j]["instruction"],
+                            "input": batch_data[j]["input"],
+                            "expected_output": batch_data[j]["output"],
+                            "model_output": output.outputs[0].text.strip()
+                        }
+                        results.append(result)
                 
                 with open(output_file, 'w', encoding='utf-8') as f:
                     json.dump(results, f, ensure_ascii=False, indent=2)
