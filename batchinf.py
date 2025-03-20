@@ -19,11 +19,9 @@ def ensure_directory(directory):
     """确保输出目录存在"""
     Path(directory).mkdir(parents=True, exist_ok=True)
 
-def process_dataset(input_path, output_path):
+def process_dataset(input_path, output_path, llm):
     """处理数据集中的JSON文件并保存结果"""
-    # 初始化vLLM
-    llm = LLM(model="/data2/zeyu/zeyu1/llmmodel/Llama3.1-70b-Instruct")
-    sampling_params = SamplingParams(temperature=0.8, max_tokens=100)
+    sampling_params = SamplingParams(temperature=0.8, max_tokens=2048)
 
     # 遍历输入目录
     for root, _, files in os.walk(input_path):
@@ -51,6 +49,7 @@ def process_dataset(input_path, output_path):
                     
                     # 批量推理
                     outputs = llm.generate(batch_prompts, sampling_params)
+                    print(outputs)
                     
                     # 保存结果
                     for j, output in enumerate(outputs):
@@ -61,6 +60,7 @@ def process_dataset(input_path, output_path):
                             "model_output": output.outputs[0].text.strip()
                         }
                         results.append(result)
+                    print(results)
                 
                 with open(output_file, 'w', encoding='utf-8') as f:
                     json.dump(results, f, ensure_ascii=False, indent=2)
@@ -76,10 +76,14 @@ if __name__ == "__main__":
                         help='Output directory path')
     args = parser.parse_args()
 
+    # 初始化模型（只执行一次）
+    # llm = LLM(model="/data2/zeyu/zeyu1/llmmodel/Llama3.1-70b-Instruct")
+    llm = LLM(model="Qwen/Qwen2.5-3B-Instruct", gpu_memory_utilization=0.9)
+    
     shots = [1, 2, 5, 8]
     datasets = ['bace', 'bbbp', 'cyp450', 'hiv', 'muv', 'tox21', 'toxcast']
     for dataset in datasets:
         for shot in shots:
             input_path = f"{args.input}/{shot}-shot/{dataset}"
             output_path = f"{args.output}/{shot}-shot/{dataset}"
-            process_dataset(input_path, output_path)
+            process_dataset(input_path, output_path, llm)
